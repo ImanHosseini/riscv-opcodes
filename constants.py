@@ -2,7 +2,7 @@ import re
 
 
 isa_regex = \
-re.compile("^RV(32|64|128)[IE]+[ABCDEFGHJKLMNPQSTUVX]*(Zicsr|Zifencei|Zihintpause|Zam|Ztso|Zkne|Zknd|Zknh|Zkse|Zksh|Zkg|Zkb|Zkr|Zks|Zkn|Zba|Zbc|Zbb|Zbp|Zbr|Zbm|Zbs|Zbe|Zbf|Zbt|Zmmul|Zbpbo){,1}(_Zicsr){,1}(_Zifencei){,1}(_Zihintpause){,1}(_Zmmul){,1}(_Zam){,1}(_Zba){,1}(_Zbb){,1}(_Zbc){,1}(_Zbe){,1}(_Zbf){,1}(_Zbm){,1}(_Zbp){,1}(_Zbpbo){,1}(_Zbr){,1}(_Zbs){,1}(_Zbt){,1}(_Zkb){,1}(_Zkg){,1}(_Zkr){,1}(_Zks){,1}(_Zkn){,1}(_Zknd){,1}(_Zkne){,1}(_Zknh){,1}(_Zkse){,1}(_Zksh){,1}(_Ztso){,1}$")
+re.compile("^RV(32|64|128)[IE]+[ABCDEFGHJKLMNPQSTUVX]*(Zicsr|Zifencei|Zihintpause|Zam|Ztso|Zkne|Zknd|Zknh|Zkse|Zksh|Zkg|Zkb|Zkr|Zks|Zkn|Zba|Zbc|Zbb|Zbp|Zbr|Zbm|Zbs|Zbe|Zbf|Zbt|Zmmul|Zbpbo|Zca|Zcf|Zcd|Zcb|Zcmp|Zcmt){,1}(_Zicsr){,1}(_Zifencei){,1}(_Zihintpause){,1}(_Zmmul){,1}(_Zam){,1}(_Zba){,1}(_Zbb){,1}(_Zbc){,1}(_Zbe){,1}(_Zbf){,1}(_Zbm){,1}(_Zbp){,1}(_Zbpbo){,1}(_Zbr){,1}(_Zbs){,1}(_Zbt){,1}(_Zkb){,1}(_Zkg){,1}(_Zkr){,1}(_Zks){,1}(_Zkn){,1}(_Zknd){,1}(_Zkne){,1}(_Zknh){,1}(_Zkse){,1}(_Zksh){,1}(_Ztso){,1}(_Zca){,1}(_Zcf){,1}(_Zcd){,1}(_Zcb){,1}(_Zcmp){,1}(_Zcmt){,1}$")
 
 # regex to find <msb>..<lsb>=<val> patterns in instruction
 fixed_ranges = re.compile(
@@ -57,6 +57,7 @@ csrs = [
   (0x00A, 'vxrm'),
   (0x00F, 'vcsr'),
   (0x015, 'seed'), # Zkr
+  (0x017, 'jvt'), # Zcmt
 
   # Standard User RO
   (0xC00, 'cycle'),
@@ -107,12 +108,21 @@ csrs = [
   (0x10D, 'sstateen1'), # Smstateen
   (0x10E, 'sstateen2'), # Smstateen
   (0x10F, 'sstateen3'), # Smstateen
+  (0x120, 'scountinhibit'), # Smcdeleg
   (0x140, 'sscratch'),
   (0x141, 'sepc'),
   (0x142, 'scause'),
   (0x143, 'stval'),
   (0x144, 'sip'),
   (0x14D, 'stimecmp'), # Sstc
+  (0x150, 'siselect'),
+  (0x151, 'sireg'),
+  (0x152, 'sireg2'),
+  (0x153, 'sireg3'),
+  (0x155, 'sireg4'),
+  (0x156, 'sireg5'),
+  (0x157, 'sireg6'),
+  (0x15C, 'stopei'),
   (0x180, 'satp'),
   (0x5A8, 'scontext'),
 
@@ -126,6 +136,14 @@ csrs = [
   (0x243, 'vstval'),
   (0x244, 'vsip'),
   (0x24D, 'vstimecmp'), # Sstc
+  (0x250, 'vsiselect'),
+  (0x251, 'vsireg'),
+  (0x252, 'vsireg2'),
+  (0x253, 'vsireg3'),
+  (0x255, 'vsireg4'),
+  (0x256, 'vsireg5'),
+  (0x257, 'vsireg6'),
+  (0x25C, 'vstopei'),
   (0x280, 'vsatp'),
   (0x600, 'hstatus'),
   (0x602, 'hedeleg'),
@@ -134,6 +152,8 @@ csrs = [
   (0x605, 'htimedelta'),
   (0x606, 'hcounteren'),
   (0x607, 'hgeie'),
+  (0x608, 'hvien'),
+  (0x609, 'hvictl'),
   (0x60A, 'henvcfg'),
   (0x60C, 'hstateen0'), # Smstateen
   (0x60D, 'hstateen1'), # Smstateen
@@ -142,13 +162,19 @@ csrs = [
   (0x643, 'htval'),
   (0x644, 'hip'),
   (0x645, 'hvip'),
+  (0x646, 'hviprio1'),
+  (0x647, 'hviprio2'),
   (0x64A, 'htinst'),
   (0x680, 'hgatp'),
   (0x6A8, 'hcontext'),
+
+  # Standard Hypervisor RO
   (0xE12, 'hgeip'),
+  (0xEB0, 'vstopi'),
 
   # Standard Supervisor RO
   (0xDA0, 'scountovf'), # Sscofpmf
+  (0xDB0, 'stopi'),
 
   # Tentative CSR assignment for CLIC
   (0x007, 'utvt'),
@@ -175,6 +201,8 @@ csrs = [
   (0x304, 'mie'),
   (0x305, 'mtvec'),
   (0x306, 'mcounteren'),
+  (0x308, 'mvien'),
+  (0x309, 'mvip'),
   (0x30a, 'menvcfg'),
   (0x30C, 'mstateen0'), # Smstateen
   (0x30D, 'mstateen1'), # Smstateen
@@ -188,6 +216,14 @@ csrs = [
   (0x344, 'mip'),
   (0x34a, 'mtinst'),
   (0x34b, 'mtval2'),
+  (0x350, 'miselect'),
+  (0x351, 'mireg'),
+  (0x352, 'mireg2'),
+  (0x353, 'mireg3'),
+  (0x355, 'mireg4'),
+  (0x356, 'mireg5'),
+  (0x357, 'mireg6'),
+  (0x35c, 'mtopei'),
   (0x3a0, 'pmpcfg0'),
   (0x3a1, 'pmpcfg1'),
   (0x3a2, 'pmpcfg2'),
@@ -312,6 +348,8 @@ csrs = [
   (0xB1D, 'mhpmcounter29'),
   (0xB1E, 'mhpmcounter30'),
   (0xB1F, 'mhpmcounter31'),
+  (0x321, 'mcyclecfg'),
+  (0x322, 'minstretcfg'),
   (0x323, 'mhpmevent3'),
   (0x324, 'mhpmevent4'),
   (0x325, 'mhpmevent5'),
@@ -348,16 +386,26 @@ csrs = [
   (0xF13, 'mimpid'),
   (0xF14, 'mhartid'),
   (0xF15, 'mconfigptr'),
+  (0xFB0, 'mtopi'),
 ]
 
 csrs32 = [
   # Standard Supervisor R/W
+  (0x114, 'sieh'),
+  (0x154, 'siph'),
   (0x15D, 'stimecmph'), # Sstc
 
-  # Standard Hypervisor R/w
+  # Standard Hypervisor R/W
+  (0x214, 'vsieh'),
+  (0x254, 'vsiph'),
   (0x25D, 'vstimecmph'), # Sstc
   (0x615, 'htimedeltah'),
+  (0x613, 'hidelegh'),
+  (0x618, 'hvienh'),
   (0x61A, 'henvcfgh'),
+  (0x655, 'hviph'),
+  (0x656, 'hviprio1h'),
+  (0x657, 'hviprio2h'),
   (0x61C, 'hstateen0h'), # Smstateen
   (0x61D, 'hstateen1h'), # Smstateen
   (0x61E, 'hstateen2h'), # Smstateen
@@ -399,11 +447,18 @@ csrs32 = [
 
   # Standard Machine RW
   (0x310, 'mstatush'),
+  (0x313, 'midelegh'),
+  (0x314, 'mieh'),
+  (0x318, 'mvienh'),
+  (0x319, 'mviph'),
   (0x31A, 'menvcfgh'),
   (0x31C, 'mstateen0h'), # Smstateen
   (0x31D, 'mstateen1h'), # Smstateen
   (0x31E, 'mstateen2h'), # Smstateen
   (0x31F, 'mstateen3h'), # Smstateen
+  (0x354, 'miph'),
+  (0x721, 'mcyclecfgh'),
+  (0x722, 'minstretcfgh'),
   (0x723, 'mhpmevent3h'),  # Sscofpmf
   (0x724, 'mhpmevent4h'),  # Sscofpmf
   (0x725, 'mhpmevent5h'),  # Sscofpmf
@@ -433,6 +488,10 @@ csrs32 = [
   (0x73D, 'mhpmevent29h'), # Sscofpmf
   (0x73E, 'mhpmevent30h'), # Sscofpmf
   (0x73F, 'mhpmevent31h'), # Sscofpmf
+  (0x740, 'mnscratch'), # Smrnmi
+  (0x741, 'mnepc'),     # Smrnmi
+  (0x742, 'mncause'),   # Smrnmi
+  (0x744, 'mnstatus'),  # Smrnmi
   (0x757, 'mseccfgh'),
   (0xB80, 'mcycleh'),
   (0xB82, 'minstreth'),
@@ -493,7 +552,7 @@ arg_lut['bimm12hi'] = (31, 25)
 arg_lut['imm12lo'] = (11, 7)
 arg_lut['bimm12lo'] = (11, 7)
 arg_lut['zimm'] = (19, 15)
-arg_lut['shamt'] = (26, 20)
+arg_lut['shamtq'] = (26, 20)
 arg_lut['shamtw'] = (24, 20)
 arg_lut['shamtw4'] = (23, 20)
 arg_lut['shamtd'] = (25, 20)
@@ -519,8 +578,11 @@ arg_lut['wd'] = (26, 26)
 arg_lut['amoop'] = (31, 27)
 arg_lut['nf'] = (31, 29)
 arg_lut['simm5'] = (19, 15)
+arg_lut['zimm5'] = (19, 15)
 arg_lut['zimm10'] = (29, 20)
 arg_lut['zimm11'] = (30, 20)
+arg_lut['zimm6hi'] = (26, 26)
+arg_lut['zimm6lo'] = (19, 15)
 
 
 #compressed immediates and fields
@@ -554,6 +616,11 @@ arg_lut['c_uimm9splo'] = (6,2)
 arg_lut['c_uimm9sphi'] = (12, 12)
 arg_lut['c_uimm10sp_s'] = (12,7)
 arg_lut['c_uimm9sp_s'] = (12,7)
+arg_lut['c_uimm2'] = (6, 5)
+arg_lut['c_uimm1'] = (5, 5)
+arg_lut['c_rlist'] = (7, 4)
+arg_lut['c_spimm'] = (3, 2)
+arg_lut['c_index'] = (9, 2)
 
 arg_lut['rs1_p'] = (9,7)
 arg_lut['rs2_p'] = (4,2)
@@ -567,6 +634,8 @@ arg_lut['rs1_n0'] = (11,7)
 arg_lut['c_rs2_n0'] = (6,2)
 arg_lut['c_rs1_n0'] = (11,7)
 arg_lut['c_rs2'] = (6,2)
+arg_lut['c_sreg1'] = (9,7)
+arg_lut['c_sreg2'] = (4,2)
 
 # dictionary containing the mapping of the argument to the what the fields in
 # the latex table should be
@@ -584,6 +653,7 @@ latex_mapping['jimm20'] = 'imm[20$\\vert$10:1$\\vert$11$\\vert$19:12]'
 latex_mapping['zimm'] = 'uimm'
 latex_mapping['shamtw'] = 'shamt'
 latex_mapping['shamtd'] = 'shamt'
+latex_mapping['shamtq'] = 'shamt'
 latex_mapping['rd_p'] = "rd\\,$'$"
 latex_mapping['rs1_p'] = "rs1\\,$'$"
 latex_mapping['rs2_p'] = "rs2\\,$'$"
@@ -595,6 +665,8 @@ latex_mapping['rd_n0'] = 'rd$\\neq$0'
 latex_mapping['rs1_n0'] = 'rs1$\\neq$0'
 latex_mapping['c_rs1_n0'] = 'rs1$\\neq$0'
 latex_mapping['rd_rs1'] = 'rd/rs1'
+latex_mapping['zimm6hi'] = 'uimm[5]'
+latex_mapping['zimm6lo'] = 'uimm[4:0]'
 latex_mapping['c_nzuimm10'] = "nzuimm[5:4$\\vert$9:6$\\vert$2$\\vert$3]"
 latex_mapping['c_uimm7lo'] = 'uimm[2$\\vert$6]'
 latex_mapping['c_uimm7hi'] = 'uimm[5:3]'
@@ -655,3 +727,23 @@ latex_fixed_fields.append((19,15))
 latex_fixed_fields.append((14,12))
 latex_fixed_fields.append((11,7))
 latex_fixed_fields.append((6,0))
+
+# Pseudo-ops present in the generated encodings.
+# By default pseudo-ops are not listed as they are considered aliases
+# of their base instruction.
+emitted_pseudo_ops = [
+    'pause',
+    'prefetch_i',
+    'prefetch_r',
+    'prefetch_w',
+    'rstsa16',
+    'rstsa32',
+    'srli32_u',
+    'slli_rv128',
+    'slli_rv32',
+    'srai_rv128',
+    'srai_rv32',
+    'srli_rv128',
+    'srli_rv32',
+    'umax32',
+]

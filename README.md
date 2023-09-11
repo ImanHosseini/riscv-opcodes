@@ -77,10 +77,19 @@ Instruction syntaxes used in this project are broadly categorized into three:
   instruction, as this avoids existence of overlapping opcodes for users who are
   experimenting with unratified extensions as well.
   
-- **imported_instructions** - these are instructions which are borrowed from an extension into a new/different extension/sub-extension. Only regular instructions can be imported. Pseudo-op instructions cannot be imported. Example:
+- **imported_instructions** - these are instructions which are borrowed from an extension into a new/different extension/sub-extension. Only regular instructions can be imported. Pseudo-op or already imported instructions cannot be imported. Example:
   ```
   $import rv32_zkne::aes32esmi
   ```
+
+### RESTRICTIONS
+
+Following are the restrictions one should keep in mind while defining $pseudo\_ops and $imported\_ops
+
+- Pseudo-op or already imported instructions cannot be imported again in another file. One should
+  always import base-instructions only.
+- While defining a $pseudo\_op, the base-instruction itself cannot be a $pseudo\_op
+
 ## Flow for parse.py
 
 The `parse.py` python file is used to perform checks on the current set of instruction encodings and also generates multiple artifacts : latex tables, encoding.h header file, etc. This section will provide a brief overview of the flow within the python file.
